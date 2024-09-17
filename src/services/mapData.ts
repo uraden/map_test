@@ -288,3 +288,5 @@ export const coordinates = [
     "details": "Service was below expectations."
   } 
 ]
+
+localStorage.setItem('coordinates', JSON.stringify(coordinates));
