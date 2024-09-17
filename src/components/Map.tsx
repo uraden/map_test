@@ -9,10 +9,15 @@ import { Style, Icon } from 'ol/style';
 import { fromLonLat } from 'ol/proj';
 import Overlay from 'ol/Overlay';
 import "./Map.css";
+import { coordinates as allCoordinates } from "../services/mapData";
 
 const MapComponent = () => {
   const storedCoordinates = localStorage.getItem('coordinates');
   const coordinates = storedCoordinates ? JSON.parse(storedCoordinates) : [];
+
+  if (!localStorage.getItem('coordinates')) {
+    localStorage.setItem('coordinates', JSON.stringify(allCoordinates));
+  }
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
