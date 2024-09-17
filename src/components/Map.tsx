@@ -5,16 +5,22 @@ import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import { OSM, Vector as VectorSource } from 'ol/source';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
-import { Style, Circle, Fill, Stroke } from 'ol/style';
+import { Style, Icon } from 'ol/style';
 import { fromLonLat } from 'ol/proj';
 import Overlay from 'ol/Overlay';
 import "./Map.css";
-import {coordinates} from "../services/mapData";
+import { coordinates } from "../services/mapData";
 
 const MapComponent = () => {
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const [setSelectedFeature] = useState<Feature | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
   const [popupContent, setPopupContent] = useState<string>('');
+
+
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [currentFeature, setCurrentFeature] = useState<any>(null);
+  const [commentInput, setCommentInput] = useState<string>('');
+  const [statusSelect, setStatusSelect] = useState<boolean>(false);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -47,72 +53,113 @@ const MapComponent = () => {
     // Fit view to show all points
     mapObj.getView().fit(vectorSource.getExtent(), { padding: [50, 50, 50, 50] });
 
-    // Add click interaction
+    // Create Overlay for popup
+    const overlay = new Overlay({
+      element: popupRef.current as HTMLElement,
+      positioning: 'bottom-center',
+      stopEvent: true,
+      offset: [0, -10], // Offset to ensure popup doesn't cover the point
+    });
+    mapObj.addOverlay(overlay);
+
+    // Add click event to display popup
     mapObj.on('click', (event) => {
       const feature = mapObj.forEachFeatureAtPixel(event.pixel, (feature) => feature);
       if (feature) {
         const properties = feature.get('properties');
-        setSelectedFeature(feature as Feature);
+        setCurrentFeature(properties);
+        setCommentInput(properties.comment || '');
+        setStatusSelect(properties.status);
+        setEditMode(false);
+
         setPopupContent(`
-          <h3>Point Details</h3>
-          <p>Comment: ${properties.comment}</p>
-          <p>Status: ${properties.status}</p>
-          <button onclick="window.changeStatus('${properties.id}')">Change Status</button>
-          <button onclick="window.editComment('${properties.id}')">Edit Comment</button>
+          <div class="ol-popup-save">
+            <p class='new text'>Comment: ${properties.details}</p>
+            <p>Status: <span class="pop-status">${properties.status ? 'Active' : 'Inactive'}</span></p>
+            <button class="btn-change" onclick="window.editDetails()">Edit</button>
+          </div>
         `);
-        // Show popup
-        const overlay = new Overlay({
-          element: document.getElementById('popup') as HTMLElement,
-          positioning: 'bottom-center',
-          stopEvent: false,
-        });
         overlay.setPosition(event.coordinate);
-        mapObj.addOverlay(overlay);
       } else {
-        setSelectedFeature(null);
+        overlay.setPosition(undefined); // Hide popup if no feature is clicked
         setPopupContent('');
-        mapObj.getOverlays().clear();
       }
     });
 
     return () => mapObj.setTarget('');
   }, []);
 
-  // Function to get point style based on status
-  const getPointStyle = (status: string) => {
-    let color = 'blue';
-    if (status === 'completed') color = 'green';
-    else if (status === 'in-progress') color = 'orange';
-    else if (status === 'not-started') color = 'red';
+
+  const getPointStyle = (status: boolean) => {
+    const color = status ? 'green' : 'red';
+    const pinIconSVG = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" width="24px" height="24px">
+        <path d="M12 2C8.1 2 5 5.1 5 9c0 5.3 6 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5s2.5 1.1 2.5 2.5S13.4 11.5 12 11.5z"/>
+      </svg>
+    `;
 
     return new Style({
-      image: new Circle({
-        radius: 6,
-        fill: new Fill({ color }),
-        stroke: new Stroke({ color: 'white', width: 2 }),
+      image: new Icon({
+        anchor: [0.5, 1],
+        anchorXUnits: 'fraction',
+        anchorYUnits: 'fraction',
+        src: `data:image/svg+xml;base64,${btoa(pinIconSVG)}`,
+        scale: 1,
       }),
     });
   };
 
-  // Functions to change status and edit comment
-  const changeStatus = (id: string) => {
-    // Implement status change logic here
-    console.log('Change status for point:', id);
+
+
+  const editDetails = () => {
+    setEditMode(true);
+    setPopupContent(`
+      <div>
+        <div><label>Comment: <input type="text" id="commentInput" value="${commentInput}" /></label></div>
+       <div>
+        <label>Status: 
+          <select id="statusSelect">
+            <option value="true" ${statusSelect ? 'selected' : ''}>Active</option>
+            <option value="false" ${!statusSelect ? 'selected' : ''}>Inactive</option>
+          </select>
+        </label>
+        </div>
+        <button class="btn-save" onclick="window.saveDetails()">Save</button>
+      </div>
+    `);
   };
 
-  const editComment = (id: string) => {
-    // Implement comment editing logic here
-    console.log('Edit comment for point:', id);
+
+  const saveDetails = () => {
+    const newComment = (document.getElementById('commentInput') as HTMLInputElement).value;
+    const newStatus = (document.getElementById('statusSelect') as HTMLSelectElement).value === 'true';
+    
+    setCommentInput(newComment);
+    setStatusSelect(newStatus);
+    
+    // Simulate saving to backend or updating feature details
+    console.log('Saving details for:', currentFeature.id);
+    console.log('New Comment:', newComment);
+    console.log('New Status:', newStatus);
+
+    setEditMode(false);
+    setPopupContent(`
+      <div>
+        <p class='new text'>Comment: ${newComment}</p>
+        <p>Status: <span class="pop-status">${newStatus ? 'Active' : 'Inactive'}</span></p>
+        <button class="btn-change" onclick="window.editDetails()">Edit</button>
+      </div>
+    `);
   };
 
-  // Expose functions to window object for popup buttons
-  (window as any).changeStatus = changeStatus;
-  (window as any).editComment = editComment;
+  window.editDetails = editDetails;
+  window.saveDetails = saveDetails;
+
 
   return (
     <>
       <div className="map" ref={mapRef} />
-      <div id="popup" className="ol-popup">{popupContent}</div>
+      <div id="popup" ref={popupRef} className="ol-popup" dangerouslySetInnerHTML={{ __html: popupContent }} />
     </>
   );
 };
