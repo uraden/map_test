@@ -14,8 +14,9 @@ import { coordinates as allCoordinates } from "../services/mapData";
 const MapComponent = () => {
   const storedCoordinates = localStorage.getItem('coordinates');
   const coordinates = storedCoordinates ? JSON.parse(storedCoordinates) : [];
-
-  if (!localStorage.getItem('coordinates')) {
+  
+  if (!coordinates.length) {
+    console.log('No coordinates found in localStorage. Using default coordinates.');
     localStorage.setItem('coordinates', JSON.stringify(allCoordinates));
   }
 
@@ -26,7 +27,7 @@ const MapComponent = () => {
 
 
   const [editMode, setEditMode] = useState<boolean>(false);
-  const [currentFeature, setCurrentFeature] = useState<any>(null);
+  const [currentFeature, setCurrentFeature] = useState<unk>(null);
   const [commentInput, setCommentInput] = useState<string>('');
   const [statusSelect, setStatusSelect] = useState<boolean>(false);
 
@@ -198,6 +199,8 @@ const MapComponent = () => {
         <button class="btn-change" onclick="window.editDetails()">Edit</button>
       </div>
     `);
+
+    window.location.reload();
   };
 
   
