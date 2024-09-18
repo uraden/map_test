@@ -10,8 +10,25 @@ import { fromLonLat } from 'ol/proj';
 import Overlay from 'ol/Overlay';
 import "./Map.css";
 import { coordinates as allCoordinates } from "../services/mapData";
+import { getAllCoordinates } from '../api/apiRequests';
+
 
 const MapComponent = () => {
+  const [allCoordinates, setAllCoordinates] = useState<[]>([]);
+
+  useEffect(() => {
+    const fetchCoordinates = async () => {
+      const coordinates = await getAllCoordinates();
+      setAllCoordinates(coordinates);
+    };
+
+    fetchCoordinates();
+  }, []);
+
+
+  console.log(allCoordinates);
+
+
   const storedCoordinates = localStorage.getItem('coordinates');
   const coordinates = storedCoordinates ? JSON.parse(storedCoordinates) : [];
   
