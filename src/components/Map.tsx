@@ -10,7 +10,7 @@ import { fromLonLat } from 'ol/proj';
 import Overlay from 'ol/Overlay';
 import "./Map.css";
 import { coordinates as allCoordinates } from "../services/mapData";
-import { getAllCoordinates, updateCoordinate } from '../api/apiRequests';
+import { getAllCoordinates, updateCoordinateById } from '../api/apiRequests';
 
 
 const MapComponent = () => {
@@ -26,7 +26,9 @@ const MapComponent = () => {
   }, []);
 
 
-  const 
+  const upDateCoordinates = async (id: string, status: boolean, details: string) => {
+    
+  }
 
 
   const storedCoordinates = localStorage.getItem('coordinates');

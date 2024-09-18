@@ -11,7 +11,7 @@ export const getAllCoordinates = async () => {
   }
 }
 
-export const updateCoordinate = async (id: string, status: boolean, details: string) => {
+export const updateCoordinateById = async (id: string, status: boolean, details: string) => {
     try {
         await axios.put(`${baseUrl}/${id}`, { status, details });
     } catch (error) {
