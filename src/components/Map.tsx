@@ -9,51 +9,44 @@ import { Style, Icon } from 'ol/style';
 import { fromLonLat } from 'ol/proj';
 import Overlay from 'ol/Overlay';
 import "./Map.css";
-import { coordinates as allCoordinates } from "../services/mapData";
 import { getAllCoordinates, updateCoordinateById } from '../api/apiRequests';
 
-
 const MapComponent = () => {
-  const [allCoordinates, setAllCoordinates] = useState<[]>([]);
-
-  useEffect(() => {
-    const fetchCoordinates = async () => {
-      const coordinates = await getAllCoordinates();
-      setAllCoordinates(coordinates);
-    };
-
-    fetchCoordinates();
-  }, []);
-
-
-  const upDateCoordinates = async (id: string, status: boolean, details: string) => {
-    
-  }
-
-
-  const storedCoordinates = localStorage.getItem('coordinates');
-  const coordinates = storedCoordinates ? JSON.parse(storedCoordinates) : [];
-  
-  if (!coordinates.length) {
-    console.log('No coordinates found in localStorage. Using default coordinates.');
-    localStorage.setItem('coordinates', JSON.stringify(allCoordinates));
-  }
-
-  const mapRef = useRef<HTMLDivElement | null>(null);
-  const popupRef = useRef<HTMLDivElement | null>(null);
-  const [popupContent, setPopupContent] = useState<string>('');
-
-
-
+  const [apiCoordinates, setApiCoordinates] = useState<[]>([]);
   const [editMode, setEditMode] = useState<boolean>(false);
   const [currentFeature, setCurrentFeature] = useState<unk>(null);
   const [commentInput, setCommentInput] = useState<string>('');
   const [statusSelect, setStatusSelect] = useState<boolean>(false);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
+  const [popupContent, setPopupContent] = useState<string>('');
+
+ 
+
+  const updateCoordinate = async (id: string, status: boolean, details: string) => {
+    try {
+      await updateCoordinateById(id, status, details);
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    const fetchData = async () => {
+      const coordinates = await getAllCoordinates();
+      setApiCoordinates(coordinates);
+    };
 
-    const features = coordinates.map((coord: { latitude: number; longitude: number; status: boolean }) => {
+    fetchData();
+  }, []);
+
+  // Only initialize the map after apiCoordinates are fetched
+  useEffect(() => {
+    if (!mapRef.current || apiCoordinates.length === 0) return;
+
+    // Create features based on apiCoordinates
+    const features = apiCoordinates.map((coord: { latitude: number; longitude: number; status: boolean }) => {
       const feature = new Feature({
         geometry: new Point(fromLonLat([coord.longitude, coord.latitude])),
         properties: coord,
@@ -62,9 +55,11 @@ const MapComponent = () => {
       return feature;
     });
 
+    // Create VectorSource and VectorLayer
     const vectorSource = new VectorSource({ features });
     const vectorLayer = new VectorLayer({ source: vectorSource });
 
+    // Create Map object
     const mapObj = new Map({
       view: new View({
         center: [0, 0],
@@ -86,7 +81,7 @@ const MapComponent = () => {
       element: popupRef.current as HTMLElement,
       positioning: 'bottom-center',
       stopEvent: true,
-      offset: [0, -10], // Offset to ensure popup doesn't cover the point
+      offset: [0, -10],
     });
     mapObj.addOverlay(overlay);
 
@@ -114,9 +109,8 @@ const MapComponent = () => {
       }
     });
 
-    return () => mapObj.setTarget('');
-  }, []);
-
+    return () => mapObj.setTarget(''); // Cleanup map on unmount
+  }, [apiCoordinates]);
 
   const getPointStyle = (status: boolean) => {
     const color = status ? 'green' : 'red';
@@ -136,7 +130,6 @@ const MapComponent = () => {
       }),
     });
   };
-
 
 
   const editDetails = () => {
@@ -169,63 +162,47 @@ const MapComponent = () => {
       }
     }, 0);
   };
-  
 
-
-  const saveDetails = () => {
+  const saveDetails = async () => {
     const newComment = (document.getElementById('commentInput') as HTMLInputElement).value;
     const newStatus = (document.getElementById('statusSelect') as HTMLSelectElement).value === 'true';
-
-    // Retrieve existing coordinates from localStorage
-    const storedCoordinates = localStorage.getItem('coordinates');
-    const coordinatesArray = storedCoordinates ? JSON.parse(storedCoordinates) : [];
-
-    // Ensure that the currentFeature contains latitude and longitude
-    if (!currentFeature || typeof currentFeature.latitude !== 'number' || typeof currentFeature.longitude !== 'number') {
-      console.error("Current feature is missing latitude or longitude.");
+  
+    // Ensure that the currentFeature contains an id, latitude, and longitude
+    if (!currentFeature || typeof currentFeature.latitude !== 'number' || typeof currentFeature.longitude !== 'number' || !currentFeature.id) {
+      console.error("Current feature is missing id, latitude, or longitude.");
       return;
     }
 
-    // Find the index of the coordinate to update
-    const index = coordinatesArray.findIndex((coord: { latitude: unknown; longitude: unknown; }) => 
-      coord.latitude === currentFeature.latitude && coord.longitude === currentFeature.longitude
-    );
-
-    // Check if the coordinate exists
-    if (index === -1) {
-      console.error("Coordinate with the specified latitude and longitude not found.");
-      return;
+    console.log('yuyyyy', 'status', newStatus, 'comment', newComment);
+  
+    try {
+      // Call the API to update the coordinate using the current feature's ID
+      await updateCoordinate(currentFeature.id, newStatus, newComment);
+  
+      // Update the UI
+      setCommentInput(newComment);
+      setStatusSelect(newStatus);
+      setEditMode(false);
+      setPopupContent(`
+        <div>
+          <p class='new text'>Comment: ${newComment}</p>
+          <p>Status: <span class="pop-status">${newStatus ? 'Active' : 'Inactive'}</span></p>
+          <button class="btn-change" onclick="window.editDetails()">Edit</button>
+        </div>
+      `);
+  
+      // Optionally reload the page if necessary
+      // window.location.reload();
+    } catch (error) {
+      console.error("Failed to update the coordinate", error);
     }
-
-    // Update the specific coordinate
-    coordinatesArray[index] = { 
-      ...coordinatesArray[index], 
-      details: newComment, 
-      status: newStatus 
-    };
-
-    // Save the updated coordinates array back to localStorage
-    localStorage.setItem('coordinates', JSON.stringify(coordinatesArray));
-
-    // Update the UI
-    setCommentInput(newComment);
-    setStatusSelect(newStatus);
-    setEditMode(false);
-    setPopupContent(`
-      <div>
-        <p class='new text'>Comment: ${newComment}</p>
-        <p>Status: <span class="pop-status">${newStatus ? 'Active' : 'Inactive'}</span></p>
-        <button class="btn-change" onclick="window.editDetails()">Edit</button>
-      </div>
-    `);
-
-    window.location.reload();
   };
-
   
-  
-
+  // eslint-disable-next-line
+  //@ts-ignore
   window.editDetails = editDetails;
+  // eslint-disable-next-line
+  //@ts-ignore
   window.saveDetails = saveDetails;
 
 
