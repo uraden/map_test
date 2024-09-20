@@ -11,10 +11,20 @@ import Overlay from 'ol/Overlay';
 import "./Map.css";
 import { getAllCoordinates, updateCoordinateById } from '../api/apiRequests';
 
+
+type CoordinateType = {
+  id: string;
+  latitude: number;
+  longitude: number;
+  status: boolean;
+  details: string;
+}
+
+
 const MapComponent = () => {
   const [apiCoordinates, setApiCoordinates] = useState<[]>([]);
   const [editMode, setEditMode] = useState<boolean>(false);
-  const [currentFeature, setCurrentFeature] = useState<unk>(null);
+  const [currentFeature, setCurrentFeature] = useState<CoordinateType | null>(null);
   const [commentInput, setCommentInput] = useState<string>('');
   const [statusSelect, setStatusSelect] = useState<boolean>(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -153,7 +163,7 @@ const MapComponent = () => {
     setTimeout(() => {
       const inputField = document.getElementById('commentInput') as HTMLInputElement;
       if (inputField) {
-        inputField.value = currentFeature.details || '';
+        inputField.value = currentFeature?.details || '';
       }
   
       const statusSelectField = document.getElementById('statusSelect') as HTMLSelectElement;
