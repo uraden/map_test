@@ -10,16 +10,18 @@ import { fromLonLat } from 'ol/proj';
 import Overlay from 'ol/Overlay';
 import "./Map.css";
 import { getAllCoordinates, updateCoordinateById } from '../api/apiRequests';
+import ZoomComponent from './ZoomComponent';
 
 const MapComponent = () => {
   const [apiCoordinates, setApiCoordinates] = useState<[]>([]);
   const [editMode, setEditMode] = useState<boolean>(false);
-  const [currentFeature, setCurrentFeature] = useState<unk>(null);
+  const [currentFeature, setCurrentFeature] = useState<unkn>(null);
   const [commentInput, setCommentInput] = useState<string>('');
   const [statusSelect, setStatusSelect] = useState<boolean>(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
   const [popupContent, setPopupContent] = useState<string>('');
+  const mapObjRef = useRef<Map | null>(null);
 
  
 
@@ -41,11 +43,11 @@ const MapComponent = () => {
     fetchData();
   }, []);
 
-  // Only initialize the map after apiCoordinates are fetched
+  
   useEffect(() => {
     if (!mapRef.current || apiCoordinates.length === 0) return;
 
-    // Create features based on apiCoordinates
+    
     const features = apiCoordinates.map((coord: { latitude: number; longitude: number; status: boolean }) => {
       const feature = new Feature({
         geometry: new Point(fromLonLat([coord.longitude, coord.latitude])),
@@ -55,11 +57,11 @@ const MapComponent = () => {
       return feature;
     });
 
-    // Create VectorSource and VectorLayer
+  
     const vectorSource = new VectorSource({ features });
     const vectorLayer = new VectorLayer({ source: vectorSource });
 
-    // Create Map object
+    
     const mapObj = new Map({
       view: new View({
         center: [0, 0],
@@ -69,14 +71,19 @@ const MapComponent = () => {
         new TileLayer({ source: new OSM() }),
         vectorLayer,
       ],
+     controls: [
+
+     ]
+
     });
 
     mapObj.setTarget(mapRef.current);
 
-    // Fit view to show all points
+    mapObjRef.current = mapObj;
+    
     mapObj.getView().fit(vectorSource.getExtent(), { padding: [50, 50, 50, 50] });
 
-    // Create Overlay for popup
+   
     const overlay = new Overlay({
       element: popupRef.current as HTMLElement,
       positioning: 'bottom-center',
@@ -85,7 +92,6 @@ const MapComponent = () => {
     });
     mapObj.addOverlay(overlay);
 
-    // Add click event to display popup
     mapObj.on('click', (event) => {
       const feature = mapObj.forEachFeatureAtPixel(event.pixel, (feature) => feature);
       if (feature) {
@@ -104,12 +110,12 @@ const MapComponent = () => {
         `);
         overlay.setPosition(event.coordinate);
       } else {
-        overlay.setPosition(undefined); // Hide popup if no feature is clicked
+        overlay.setPosition(undefined); 
         setPopupContent('');
       }
     });
 
-    return () => mapObj.setTarget(''); // Cleanup map on unmount
+    return () => mapObj.setTarget(''); 
   }, [apiCoordinates]);
 
   const getPointStyle = (status: boolean) => {
@@ -172,14 +178,9 @@ const MapComponent = () => {
       console.error("Current feature is missing id, latitude, or longitude.");
       return;
     }
-
-    console.log('yuyyyy', 'status', newStatus, 'comment', newComment);
   
     try {
-      // Call the API to update the coordinate using the current feature's ID
       await updateCoordinate(currentFeature.id, newStatus, newComment);
-  
-      // Update the UI
       setCommentInput(newComment);
       setStatusSelect(newStatus);
       setEditMode(false);
@@ -190,9 +191,7 @@ const MapComponent = () => {
           <button class="btn-change" onclick="window.editDetails()">Edit</button>
         </div>
       `);
-  
-      // Optionally reload the page if necessary
-      // window.location.reload();
+
     } catch (error) {
       console.error("Failed to update the coordinate", error);
     }
@@ -205,11 +204,32 @@ const MapComponent = () => {
   //@ts-ignore
   window.saveDetails = saveDetails;
 
+  const handleZoomIn = () => {
+    const map = mapObjRef.current; // <-- Access the map instance from the ref
+    if (map) {
+      const view = map.getView();
+      const zoom = view.getZoom();
+      view.setZoom(zoom + 1);
+    }
+  };
+
+  const handleZoomOut = () => {
+    const map = mapObjRef.current; // <-- Access the map instance from the ref
+    if (map) {
+      const view = map.getView();
+      const zoom = view.getZoom();
+      view.setZoom(zoom - 1);
+    }
+  };
 
   return (
     <>
       <div className="map" ref={mapRef} />
       <div id="popup" ref={popupRef} className="ol-popup" dangerouslySetInnerHTML={{ __html: popupContent }} />
+      <ZoomComponent 
+        zoomIn={handleZoomIn} 
+        zoomOut={handleZoomOut}
+      />
     </>
   );
 };
