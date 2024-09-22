@@ -1,0 +1,22 @@
+{
+    "name": "My Map",
+    "short_name": "My Map",
+    "description": "Simple home work map app",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+      {
+        "src": "/my_map.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/my_map.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }
+  
