@@ -33,8 +33,6 @@ const MapComponent = () => {
   const [popupContent, setPopupContent] = useState<string>('');
   const mapObjRef = useRef<Map | null>(null);
 
- 
-
   const updateCoordinate = async (id: string, status: boolean, details: string) => {
     try {
       await updateCoordinateById(id, status, details);
@@ -70,7 +68,6 @@ const MapComponent = () => {
   
     const vectorSource = new VectorSource({ features });
     const vectorLayer = new VectorLayer({ source: vectorSource });
-
     
     const mapObj = new Map({
       view: new View({
@@ -110,6 +107,7 @@ const MapComponent = () => {
         setCommentInput(properties.comment || '');
         setStatusSelect(properties.status);
         setEditMode(false);
+        console.log('edit mode', editMode);
 
         setPopupContent(`
           <div class="ol-popup-save">
@@ -165,7 +163,6 @@ const MapComponent = () => {
       </div>
     `);
   
-    // Use a timeout or directly manipulate DOM to set input values after rendering
     setTimeout(() => {
       const inputField = document.getElementById('commentInput') as HTMLInputElement;
       if (inputField) {
@@ -183,7 +180,7 @@ const MapComponent = () => {
     const newComment = (document.getElementById('commentInput') as HTMLInputElement).value;
     const newStatus = (document.getElementById('statusSelect') as HTMLSelectElement).value === 'true';
   
-    // Ensure that the currentFeature contains an id, latitude, and longitude
+    
     if (!currentFeature || typeof currentFeature.latitude !== 'number' || typeof currentFeature.longitude !== 'number' || !currentFeature.id) {
       console.error("Current feature is missing id, latitude, or longitude.");
       return;
@@ -192,6 +189,7 @@ const MapComponent = () => {
     try {
       await updateCoordinate(currentFeature.id, newStatus, newComment);
       setCommentInput(newComment);
+      console.log('new status', commentInput);
       setStatusSelect(newStatus);
       setEditMode(false);
       setPopupContent(`
@@ -207,28 +205,29 @@ const MapComponent = () => {
     }
   };
   
-  // eslint-disable-next-line
-  //@ts-ignore
+
   window.editDetails = editDetails;
-  // eslint-disable-next-line
-  //@ts-ignore
   window.saveDetails = saveDetails;
 
   const handleZoomIn = () => {
-    const map = mapObjRef.current; // <-- Access the map instance from the ref
+    const map = mapObjRef.current;
     if (map) {
       const view = map.getView();
       const zoom = view.getZoom();
-      view.setZoom(zoom + 1);
+      if (zoom !== undefined) { 
+        view.setZoom(zoom + 1);
+      }
     }
   };
 
   const handleZoomOut = () => {
-    const map = mapObjRef.current; // <-- Access the map instance from the ref
+    const map = mapObjRef.current;
     if (map) {
       const view = map.getView();
       const zoom = view.getZoom();
-      view.setZoom(zoom - 1);
+      if (zoom !== undefined) {
+        view.setZoom(zoom - 1);
+      }
     }
   };
 

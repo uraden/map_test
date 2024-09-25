@@ -1,0 +1,1 @@
+{"root":["./cypress/e2e/maptest.cy.ts","./cypress/support/commands.ts","./cypress/support/e2e.ts","./src/app.tsx","./src/global.d.ts","./src/main.tsx","./src/vite-env.d.ts","./src/api/apirequests.ts","./src/components/map.tsx","./src/components/zoomcomponent.tsx","./src/services/mapdata.ts"],"version":"5.6.2"}
