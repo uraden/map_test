@@ -1,4 +1,3 @@
-```markdown
 # React Vite Project
 
 ## Instructions to Launch the Project
@@ -50,4 +49,3 @@
 
 5. **Click `mapTest`:**
     ![Click mapTest](public/pickTest.png)
-```
