@@ -23,13 +23,13 @@
 ## How Project Looks Like
 
 1. **Initial Project Appearance:**
-    ![Initial Project Appearance](public/wholeProject.png)
+    ![Initial Project Appearance](public/images/wholeProject.png)
 
 2. **Clicking on the coordinate will open a pop-up:**
-    ![Coordinate Pop-up](public/coordinate-popup-image.png)
+    ![Coordinate Pop-up](public/images/popPic.png)
 
 3. **User can update the status and change the details value by clicking Edit button:**
-    ![Update Status and Details](public/editPic.png)
+    ![Update Status and Details](public/images/editPic.png)
 
 ## Instructions on How to Run the E2E Test
 
@@ -42,10 +42,10 @@
     npx cypress open
     ```
 3. **Click on the E2E Testing button:**
-    ![E2E Testing Button](public/cypress.png)
+    ![E2E Testing Button](public/images/cypress.png)
 
 4. **Select Chrome:**
-    ![Select Chrome](public/cypressChrome.png)
+    ![Select Chrome](public/images/cypressChrome.png)
 
 5. **Click `mapTest`:**
-    ![Click mapTest](public/pickTest.png)
+    ![Click mapTest](public/images/pickTest.png)
