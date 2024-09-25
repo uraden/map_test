@@ -83,7 +83,7 @@ const MapComponent = () => {
      ]
 
     });
-
+ 
     mapObj.setTarget(mapRef.current);
 
     mapObjRef.current = mapObj;
